@@ -7,12 +7,26 @@ import matplotlib.pyplot as plt
 
 dollars= "100"*USD
 for api in mexbtcapi.apis:
-#    try:
+    try:
+        cmp = lambda x,y: int(float(x.exchange_rate.convert(Amount(1, BTC)).value - 
+            y.exchange_rate.convert(Amount(1, BTC)).value)*10E+6)
+        dcmp = lambda x,y: -cmp(x,y)
+
         depth = api.market(USD).getDepth()
-        x = [o.from_amount.value for o in depth['asks']]
-        y = [float(o.exchange_rate.convert(Amount(1, BTC)).value) for o in depth['asks']]
-        print y
-        plt.plot(x, y)
+        for typ in ['asks', 'bids']:
+            keys = sorted(depth[typ], typ=='asks' and cmp or dcmp)
+            v = 0.0
+            y = []
+
+            for vol in (float(o.from_amount.value) for o in keys):
+                v += vol
+                y.append(v)
+
+            x = [float(o.exchange_rate.convert(Amount(1, BTC)).value) for o in keys]
+            if typ == 'asks':
+                plt.plot(x, y, 'b')
+            else:
+                plt.plot(x, y, 'r')
         plt.show()
-#    except Exception, e:
-#        print "Failed to use "+api.name 
+    except Exception, e:
+        print "Failed to use "+api.name 
