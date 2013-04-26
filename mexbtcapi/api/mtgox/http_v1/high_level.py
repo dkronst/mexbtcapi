@@ -89,12 +89,41 @@ class MtGoxMarket(BaseMarket):
 
         for d in depth:
             timestamp = datetime.now() # Don't need the information about each order when checking depth
-            amount = Amount(Decimal(depth[d] / self._multiplier(BTC)), BTC)
-            price = self.xchg_factory(Decimal(d / self._multiplier(self.currency1)))
+            amount = Amount(Decimal(depth[d]) / Decimal(self._multiplier(BTC)), BTC)
+            price = self.xchg_factory(Decimal(d) / Decimal(self._multiplier(self.currency1)))
             order = Order(self, timestamp, order_type, amount, price)
             orders.append(order)
 
         return orders
+
+    def simulateOrder(self, order):
+        """
+        Simulates putting the given order on the market RIGHT NOW (engine lag may change 
+        the result if actually placed). 
+        returns a tupple of amounts with currency and item respectively
+        """
+        cmp = lambda x,y: int(float(x.exchange_rate.convert(Amount(1, BTC)).value - 
+            y.exchange_rate.convert(Amount(1, BTC)).value)*10E+6)
+        dcmp = lambda x,y: -cmp(x,y)
+
+        depth = self.getDepth()
+
+        if order.is_bid_order():
+            total_item = Amount(0, self.currency2)
+            currency_left = order.from_amount
+            sorted_depth = sorted(depth['bids'], dcmp)
+            while sorted_depth and currency_left:
+                od = sorted_depth.pop()
+                currency_chunk = od.expense()
+                if currency_left > od.expense():
+                    currency_left -= currency_chunk
+                    total_item += od.exchange_rate.convert(currency_chunk)
+                else:
+                    total_item += od.exchange_rate.convert(currency_left)
+                    currency_left = 0.0
+
+        return currency_left, total_item
+
 
     def getTrades(self):
         logger.debug("getting trades")
@@ -128,16 +157,16 @@ class MtGoxParticipant(ActiveParticipant):
         self.private = low_level.Private(key, secret)
 
     def placeOrder(self, order):
-        """places an Order in the market for price/amount"""
+        """places an Order in the market for limit/amount"""
         now = datetime.now()
-        if order.is_buy_order():
-            logger.debug("placing buy order")
+        if order.is_bid_order():
+            logger.debug("placing bid order")
             oid = self.private.bid(order.from_amount.value, order.exchange_rate)
-            return MtGoxOrder(oid, self.market, now, Order.BID, amount, price, entity=self)
+            return MtGoxOrder(oid, self.market, now, Order.BID, amount, limit, entity=self)
         else:
             logger.debug("placing ask order")
-            oid = self.private.ask(amount, price)
-            return MtGoxOrder(oid, self.market, now, Order.ASK, amount, price, entity=self)
+            oid = self.private.ask(amount, limit)
+            return MtGoxOrder(oid, self.market, now, Order.ASK, amount, limit, entity=self)
 
     def cancelOrder(self, order):
         """Cancel an existing order"""
@@ -146,7 +175,7 @@ class MtGoxParticipant(ActiveParticipant):
         logger.debug("cancelling order {0}".format(order.oid))
 
         oid = order.oid
-        if order.is_buy_order():
+        if order.is_bid_order():
             result = self.private.cancel_bid(oid)
         else:
             result = self.private.cancel_ask(oid)

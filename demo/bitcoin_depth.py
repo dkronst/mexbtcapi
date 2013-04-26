@@ -5,7 +5,6 @@ from mexbtcapi.concepts.currency import Amount
 import matplotlib.pyplot as plt
 
 
-dollars= "100"*USD
 for api in mexbtcapi.apis:
     try:
         cmp = lambda x,y: int(float(x.exchange_rate.convert(Amount(1, BTC)).value - 

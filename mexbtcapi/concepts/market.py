@@ -41,30 +41,45 @@ class Order(object):
 
     BID = 'BID'
     ASK = 'ASK'
+    MARKET_BUY = 'MARKET_BUY'
+    MARKET_SELL = 'MARKET_SELL'
 
-    def __init__(self, market, timestamp, buy_or_sell, from_amount,
+    def __init__(self, market, timestamp, order_type, from_amount,
                  exchange_rate, properties="", entity=None):
         assert isinstance(market, Market)  # must not be null
-        assert isinstance(timestamp, datetime)  # must not be null
-        assert buy_or_sell in [self.BID, self.ASK]
+        assert timestamp is None or isinstance(timestamp, datetime) # None means now
+        assert order_type in [self.BID, self.ASK, self.MARKET_BUY, self.MARKET_SELL]
         assert isinstance(from_amount, Amount)
         assert isinstance(exchange_rate, ExchangeRate)
         assert isinstance(properties, str)
         assert entity is None or isinstance(entity, Participant)
 
         self.market = market
-        self.timestamp = timestamp
-        self.buy_or_sell = buy_or_sell
+        self.timestamp = timestamp or datetime.now()
+        self.order_type = order_type
         self.from_amount = from_amount
-        self.exchange_rate = exchange_rate
+        self.exchange_rate = exchange_rate # or limit in case of ask/bid orders
         self.properties = properties
         self.entity = entity
+    
+    def expense(self):
+        """
+        Returns the maximum expense needed to complete this transaction - i.e. the 
+        amount exchanged at the exchange rate
+        """
+        return self.exchange_rate.convert(self.from_amount)
 
-    def is_buy_order(self):
-        return self.buy_or_sell == self.BID
+    def is_bid_order(self):
+        return self.order_type == self.BID
 
-    def is_sell_order(self):
-        return self.buy_or_sell != self.BID
+    def is_ask_order(self):
+        return self.order_type == self.ASK
+
+    def is_buy_market_order(self):
+        return self.order_type == self.MARKET_BUY
+
+    def is_sell_market_order(self):
+        return self.order_type == self.MARKET_SELL
 
     def __str__(self):
         return "{0} -> {1}".format(self.from_amount, self.exchange_rate)
@@ -82,7 +97,11 @@ class Market(object):
         market's context'''
 
     def __init__(self, market_name, buy_currency, sell_currency):
-        """Currency1 is the "buy" currency"""
+        """
+        Currency1 is the "buy" currency, i.e. the currency used to 
+        buy the "sell_currency" or in other words the 'item' sold
+        on this exchange
+        """
         self.name = market_name
         self.currency1 = buy_currency
         self.currency2 = sell_currency
