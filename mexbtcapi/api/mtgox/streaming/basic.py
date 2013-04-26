@@ -164,7 +164,16 @@ class DepthChannel(NoSubscriptionChannel):
         build on that.
         """
         NoSubscriptionChannel.__init__(self, "depth")
-        self.depth_info = initial_depth.copy()
+        di = initial_depth.copy()
+        res = {'asks':{}, 'bids':{}}
+        for typ in res.keys():
+            for record in di[typ]:
+                price_int = int(record['price_int'])
+                amount_int = int(record['amount_int'])
+                res[typ][price_int] = amount_int
+
+        print "got initial depth, num of records:", len(res)
+        self.depth_info = res
 
     def _add_to_depth(self, msg):
         """
@@ -173,7 +182,7 @@ class DepthChannel(NoSubscriptionChannel):
         dpt = msg["depth"]
         price_int = int(dpt['price_int'])
         volume_int = int(dpt['volume_int'])
-        typ = dpt['type_str']
+        typ = dpt['type_str'] + 's'
         self.depth_info[typ][price_int] = self.depth_info[typ].get(price_int, 0) + price_int
         if self.depth_info[typ][price_int] == 0:
             del self.depth_info[typ][price_int]
