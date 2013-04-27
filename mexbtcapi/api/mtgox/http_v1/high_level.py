@@ -40,8 +40,8 @@ class MtGoxOrder(Order):
 class MtGoxMarket(BaseMarket):
     MARKET_NAME = "MtGox"
 
-    def __init__(self, currency):
-        super(MtGoxMarket, self).__init__(self.MARKET_NAME, currency, BTC)
+    def __init__(self, currency, item = BTC):
+        super(MtGoxMarket, self).__init__(self.MARKET_NAME, currency, item)
 
         # to convert low level data
         self.multiplier = low_level.multiplier
@@ -88,6 +88,8 @@ class MtGoxMarket(BaseMarket):
         orders = []
 
         for d in depth:
+            # TODO: change the low-level stream to use Amount instead of numbers
+            # this means also changing the "hash" of Amount.
             timestamp = datetime.now() # Don't need the information about each order when checking depth
             amount = Amount(Decimal(depth[d]) / Decimal(self._multiplier(BTC)), BTC)
             price = self.xchg_factory(Decimal(d) / Decimal(self._multiplier(self.currency1)))
@@ -108,6 +110,8 @@ class MtGoxMarket(BaseMarket):
 
         depth = self.getDepth()
 
+        # TODO: Implement the rest...
+
         if order.is_bid_order():
             total_item = Amount(0, self.currency2)
             currency_left = order.from_amount
@@ -123,7 +127,6 @@ class MtGoxMarket(BaseMarket):
                     currency_left = 0.0
 
         return currency_left, total_item
-
 
     def getTrades(self):
         logger.debug("getting trades")

@@ -111,7 +111,19 @@ class Market(object):
         raise NotImplementedError()
 
     def getDepth(self):
-        """Returns the depth book"""
+        """
+        Returns the depth book as a dictionary with two keys: 'asks', 'bids'. Each containing 
+        a list of orders representing each
+        """
+        raise NotImplementedError()
+
+    def simulateOrder(self, order):
+        """
+        Simulates an order if given right now. Returns a tupple of the currency used
+        and the item. The currency is the currency left after this order (left over from this
+        order only!) and the item is how much of the item will be gained if this
+        order was placed right now (actual results may vary due to engine lag)
+        """
         raise NotImplementedError()
 
     def getTrades(self):
