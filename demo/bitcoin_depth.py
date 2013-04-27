@@ -4,6 +4,7 @@ from mexbtcapi.concepts.currency import Amount
 
 import matplotlib.pyplot as plt
 
+from decimal import Decimal
 
 for api in mexbtcapi.apis:
     try:
@@ -21,7 +22,8 @@ for api in mexbtcapi.apis:
                 v += vol
                 y.append(v)
 
-            x = [float(o.exchange_rate.convert(Amount(1, BTC)).value) for o in keys]
+            x = [float(o.exchange_rate.convert(Amount(Decimal(1.0), BTC)).value) for o in keys]
+
             if typ == 'asks':
                 plt.plot(x, y, 'b')
             else:
