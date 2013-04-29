@@ -126,10 +126,10 @@ class Market(object):
 
         returns a tupple of amounts with currency and the item respectively
         """
-        def upperLimit(d):
+        def upperLimit(d, order):
             a = Amount(1, self.currency2)
             return d.exchange_rate.convert(a) > order.exchange_rate.convert(a)
-        def lowerLimit(d):
+        def lowerLimit(d, order):
             a = Amount(1, self.currency2)
             return d.exchange_rate.convert(a) < order.exchange_rate.convert(a)
 
@@ -157,9 +157,9 @@ class Market(object):
             limit = lowerLimit
 
         if order.order_type == Order.MARKET_BUY:
-            order.exchange_rate = ExchangeRate(self.currency1, self.currency2, 10E+12)
+            order.exchange_rate = ExchangeRate(self.currency2, self.currency1, '9999999')
         if order.order_type == Order.MARKET_SELL:
-            order.exchange_rate = ExchangeRate(self.currency1, self.currency2, 0.1)
+            order.exchange_rate = ExchangeRate(self.currency2, self.currency1, '0.001')
 
         sim_c = (order.from_amount.currency == self.currency1 and self.currency2) or self.currency1
 
@@ -172,12 +172,12 @@ class Market(object):
 
         for d in dp:
             next_chunk = d.exchange_rate.convert(d.from_amount, order.from_amount.currency)
-            if limit(d):
+            if limit(d, order):
                 break
-            print "loop", next_chunk, bucket, total_transacted
             if next_chunk > bucket: # We don't have enough in the bucket to complete this chunk
                 # The limit was not reached at this depth...
                 total_transacted += d.exchange_rate.convert(bucket, sim_c)
+                bucket = Amount(0, order.from_amount.currency)
                 break
             total_transacted += d.exchange_rate.convert(next_chunk, sim_c)
             bucket -= next_chunk

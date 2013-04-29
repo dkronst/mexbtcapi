@@ -172,7 +172,6 @@ class DepthChannel(NoSubscriptionChannel):
                 amount_int = int(record['amount_int'])
                 res[typ][price_int] = amount_int
 
-        print "got initial depth, num of records:", len(res)
         self.depth_info = res
 
     def _add_to_depth(self, msg):
