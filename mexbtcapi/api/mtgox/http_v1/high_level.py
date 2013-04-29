@@ -98,35 +98,6 @@ class MtGoxMarket(BaseMarket):
 
         return orders
 
-    def simulateOrder(self, order):
-        """
-        Simulates putting the given order on the market RIGHT NOW (engine lag may change 
-        the result if actually placed). 
-        returns a tupple of amounts with currency and item respectively
-        """
-        cmp = lambda x,y: int(float(x.exchange_rate.convert(Amount(1, BTC)).value - 
-            y.exchange_rate.convert(Amount(1, BTC)).value)*10E+6)
-        dcmp = lambda x,y: -cmp(x,y)
-
-        depth = self.getDepth()
-
-        # TODO: Implement the rest...
-
-        if order.is_bid_order():
-            total_item = Amount(0, self.currency2)
-            currency_left = order.from_amount
-            sorted_depth = sorted(depth['bids'], dcmp)
-            while sorted_depth and currency_left:
-                od = sorted_depth.pop()
-                currency_chunk = od.expense()
-                if currency_left > od.expense():
-                    currency_left -= currency_chunk
-                    total_item += od.exchange_rate.convert(currency_chunk)
-                else:
-                    total_item += od.exchange_rate.convert(currency_left)
-                    currency_left = 0.0
-
-        return currency_left, total_item
 
     def getTrades(self):
         logger.debug("getting trades")

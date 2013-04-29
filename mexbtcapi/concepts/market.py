@@ -50,7 +50,7 @@ class Order(object):
         assert timestamp is None or isinstance(timestamp, datetime) # None means now
         assert order_type in [self.BID, self.ASK, self.MARKET_BUY, self.MARKET_SELL]
         assert isinstance(from_amount, Amount)
-        assert isinstance(exchange_rate, ExchangeRate)
+        assert not (order_type in [self.BID, self.ASK]) or isinstance(exchange_rate, ExchangeRate)
         assert isinstance(properties, str)
         assert entity is None or isinstance(entity, Participant)
 
@@ -123,8 +123,67 @@ class Market(object):
         and the item. The currency is the currency left after this order (left over from this
         order only!) and the item is how much of the item will be gained if this
         order was placed right now (actual results may vary due to engine lag)
+
+        returns a tupple of amounts with currency and the item respectively
         """
-        raise NotImplementedError()
+        def upperLimit(d):
+            a = Amount(1, self.currency2)
+            return d.exchange_rate.convert(a) > order.exchange_rate.convert(a)
+        def lowerLimit(d):
+            a = Amount(1, self.currency2)
+            return d.exchange_rate.convert(a) < order.exchange_rate.convert(a)
+
+        # this is a fairly generic implementation. It should work for
+        # all markets that implement "getDepth" properly
+        cmp = lambda x,y: int(float(x.exchange_rate.convert(Amount(1, self.currency2)).value - 
+            y.exchange_rate.convert(Amount(1, self.currency2)).value)*10E+8)
+        dcmp = lambda x,y: -cmp(x,y)
+
+        depth = self.getDepth()
+        # There are 4 possibilities for bid/ask orders:
+        # 1. bid is given in C1 => e.g. buy 100 USD of BTC limit 150 => take 100 USD and spend them until limit is reached
+        # 2. bid is given in C2 => e.g. buy 1 BTC, limit 150 => buy AT MOST 1 BTC with - spend USD until 1 BTC is reached or limit
+        # 3. ask is given in C1 => e.g. sell 100 USD worth of BTC => sell BTC until you reach limit or 100 dollars
+        # 4. ask is given in C2 => e.g. sell 1 BTC with limit => sell until 1 BTC is reached or limit
+        #
+        # So there are 2 factors: the amount to sell/buy and the limit. 
+        # Selling BTC is the same as buying USD so we can use that - but in that case the limit still has to be
+        # used. 
+
+        if order.order_type in [Order.BID, Order.MARKET_BUY]:
+            # e.g. Selling amount is given in USD but selling BTC
+            limit = upperLimit
+        else:
+            limit = lowerLimit
+
+        if order.order_type == Order.MARKET_BUY:
+            order.exchange_rate = ExchangeRate(self.currency1, self.currency2, 10E+12)
+        if order.order_type == Order.MARKET_SELL:
+            order.exchange_rate = ExchangeRate(self.currency1, self.currency2, 0.1)
+
+        sim_c = (order.from_amount.currency == self.currency1 and self.currency2) or self.currency1
+
+        bucket = order.from_amount.clone() # starting with a full amount of currency and subtracting as we go...
+
+        # If we are buying we need to look at the sorted asks, and vice versa
+        dp = (order.order_type in [Order.BID, Order.MARKET_BUY] and sorted(depth['asks'], cmp)) \
+                or sorted(depth['bids'], dcmp)
+        total_transacted = Amount(0, sim_c)
+
+        for d in dp:
+            next_chunk = d.exchange_rate.convert(d.from_amount, order.from_amount.currency)
+            if limit(d):
+                break
+            print "loop", next_chunk, bucket, total_transacted
+            if next_chunk > bucket: # We don't have enough in the bucket to complete this chunk
+                # The limit was not reached at this depth...
+                total_transacted += d.exchange_rate.convert(bucket, sim_c)
+                break
+            total_transacted += d.exchange_rate.convert(next_chunk, sim_c)
+            bucket -= next_chunk
+        return total_transacted, order.from_amount - bucket
+
+
 
     def getTrades(self):
         """Returns all completed trades"""

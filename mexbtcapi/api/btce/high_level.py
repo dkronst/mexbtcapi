@@ -98,64 +98,10 @@ class BTCeMarket(BaseMarket):
 
         return orders
 
-    def simulateOrder(self, order):
-        """
-        Simulates putting the given order on the market RIGHT NOW (engine lag may change 
-        the result if actually placed). 
-        returns a tupple of amounts with currency and item respectively
-        """
-        cmp = lambda x,y: int(float(x.exchange_rate.convert(Amount(1, self.currency2)).value - 
-            y.exchange_rate.convert(Amount(1, self.currency2)).value)*10E+8)
-        dcmp = lambda x,y: -cmp(x,y)
-
-        depth = self.getDepth()
-
-        # TODO: Implement the rest...
-
-        if order.is_bid_order():
-            total_item = Amount(0, self.currency2)
-            currency_left = order.from_amount
-            sorted_depth = sorted(depth['bids'], dcmp)
-            while sorted_depth and currency_left:
-                od = sorted_depth.pop()
-                currency_chunk = od.expense()
-                if currency_left > od.expense():
-                    currency_left -= currency_chunk
-                    total_item += od.exchange_rate.convert(currency_chunk)
-                else:
-                    total_item += od.exchange_rate.convert(currency_left)
-                    currency_left = 0.0
-
-        return currency_left, total_item
-
-    def getTrades(self):
-        logger.debug("getting trades")
-
-        low_level_trades = low_level.trades()
-
-        # convert tradres to array of Trades
-        trades = []
-        for trade in low_level_trades:
-            price = Decimal(trade['price_int']) / \
-                self._multiplier(self.currency1)
-            amount = Decimal(trade['amount_int']) / \
-                self._multiplier(BTC)
-            timestamp = datetime.fromtimestamp(trade['date'])
-
-            btc_amount = Amount(amount, BTC)
-            exchange_rate = self.xchg_factory(price)
-
-            t = Trade(self, timestamp, btc_amount, exchange_rate)
-            t.tid = ['tid']
-
-            trades.append(t)
-
-        return trades
-
 
 class BTCeParticipant(ActiveParticipant):
 
-    def __init__(self, market, key, secret):
+    def __init__(self, market, key, secret, nonce):
         super(BTCeParticipant, self).__init__(market)
         self.private = low_level.Private(key, secret)
 
