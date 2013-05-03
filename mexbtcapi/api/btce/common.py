@@ -6,11 +6,12 @@ btce_domain = "btc-e.com"
 all_currencies = ("btc", "usd", "rur", "ltc", "nmc", "eur", "nvc", "trc", "ppc")  
 all_pairs = ("btc_usd", "btc_rur", "ltc_btc", "ltc_usd", "ltc_rur",
              "nmc_btc", "usd_rur", "eur_usd", "nvc_btc", "trc_btc",
-             "ppc_btc")
+             "ppc_btc", "btc_eur")
 max_digits = {"btc_usd":3,
               "btc_rur":4,
               "ltc_btc":5, 
               "ltc_usd":6,
+              "btc_eur":6,
               "ltc_rur":4,
               "nmc_btc":4,
               "usd_rur":4,

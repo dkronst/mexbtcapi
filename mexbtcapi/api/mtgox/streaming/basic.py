@@ -51,7 +51,6 @@ class MtGoxStream(object):
             elif op == 'private':
                 for ch in self.stream.channels:
                     if ch.ch_id == msg['channel']:
-                        print "push", ch.ch_id, ch.ch_type 
                         ch.push_msg(msg)
             elif op == 'remark':
                 self.stream.remarks.put_nowait(msg)
@@ -67,8 +66,9 @@ class MtGoxStream(object):
             while self.valid:
                 while not self.to_send.empty():
                     s = json.dumps(self.to_send.get())
-                    print "sending %r"%s
                     self.ws.send(s)
+                
+                # TODO: Add KA
                 
                 msg = self.stream.ws.recv()
                 self.processMessage(json.loads(msg))
@@ -80,7 +80,8 @@ class MtGoxStream(object):
         """
         self.currencies = currencies
         self.ws = websocket.WebSocket()
-        self.ws.connect('wss://websocket.mtgox.com/mtgox?Currency=USD') # TODO: Verify cert
+        curr_str = ','.join((str(c) for c in currencies))
+        self.ws.connect('wss://websocket.mtgox.com/mtgox?Currency=%s'%curr_str) # TODO: Verify cert
         self.sock = self.ws.sock
         self.subscriptions = {}
         self.channels = []
@@ -107,9 +108,10 @@ class MtGoxStream(object):
             assert('op' in res and res['op'] == 'subscribe')
             channel.ch_id = res['channel']
             #logging.info("Subscribed to channel %s for %s"%(d['type'], res['channel'])
-            print "Subscribed to channel %s for %s"%(d['type'], res['channel'])
+            #print "Subscribed to channel %s for %s"%(d['type'], res['channel'])
         else:
-            print "Subscribed to a constant channel: %r"%channel.ch_id
+            #print "Subscribed to a constant channel: %r"%channel.ch_id
+            pass
         self.channels.append(channel)
         
 
@@ -139,7 +141,7 @@ class MtGoxChannel(object):
         """
         Push a message to the message queue
         """
-        self.msg_queue.put_nowait(msg)
+        self.msg_queue.put(msg)
         self.msg_event.set()
     
 class NoSubscriptionChannel(MtGoxChannel):
@@ -194,21 +196,6 @@ class DepthChannel(NoSubscriptionChannel):
         while not self.msg_queue.empty():
             self._add_to_depth(self.msg_queue.get())
         return self.depth_info
-
-    def simulate_buy(self, amount):
-        """
-        Tries to simulate a buy order
-        Returns the number of items that can be bought with amount
-        """
-        # TODO: Finish implmeneting this
-        raise NotImplementedError
-
-    def simulate_sell(self, amount):
-        """
-        Same as simulate_buy only for sell
-        """
-        # TODO: Finish implementing this
-        raise NotImplementedError
 
 class TradeChannel(NoSubscriptionChannel):
     # Not implemented properly yet

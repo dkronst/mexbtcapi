@@ -72,9 +72,10 @@ class MtGoxMarket(BaseMarket):
     def getDepth(self):
         logger.debug("getting depth")
         if not self.mtgox_stream:
-            self.mtgox_stream = streamapi.MtGoxStream(None)
-            low_level_depth = low_level.depth()
+            self.mtgox_stream = streamapi.MtGoxStream([self.currency1])
+            low_level_depth = low_level.depth(str(self.currency1))
             self.depth_channel = streamapi.DepthChannel(low_level_depth)
+            self.mtgox_stream.subscribe(self.depth_channel)
         
         low_level_depth = self.depth_channel.depth()
 

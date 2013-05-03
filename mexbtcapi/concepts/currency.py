@@ -80,7 +80,10 @@ class ExchangeRate(object):
     def reverse( self ):
         '''returns a ExchangeRate with swapped currencies order. 
         The relative value of the currencies remains the same'''
-        return ExchangeRate(self._c[1], self._c[0], 1/self._er )
+        return ExchangeRate(self._c[1], self._c[0], 1/self._er)
+
+    def abs(self):
+        return self._er
 
     def convert_exchangerate( self, exchange_rate):
         '''Let (CA0,CA1) be the currencies of self, and (CB0,CB1) the 
@@ -173,6 +176,19 @@ class ExchangeRate(object):
         a = self.clone() + (-other)
         return a
 
+    def __mul__(self, other):
+        if isinstance(other, Amount):
+            return self.convert(other)
+        elif isinstance(other, ExchangeRate):
+            assert other.c[1] == self.c[0] or other.c[0] == self.c[1]
+            if other.c[0] == self.c[1] and other.c[1] == self.c[0]:
+                return Decimal(other._er * self._er)
+            elif other.c[0] == self.c[1]: # 0 is the denominator
+                return ExchangeRate(self.c[0], other.c[1], other._er*self._er)
+            else:
+                return ExchangeRate(other.c[0], self.c[1], other._er*self._er)
+        else:
+            raise BadCurrency("Can only multiply currency that reduce to a simple C1/C2 exchange rate")
 
 class Amount(object):
     """An amount of a given currency"""
