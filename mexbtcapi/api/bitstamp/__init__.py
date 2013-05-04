@@ -23,7 +23,7 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-from mexbtcapi.api.bitstamp.rest.high_level import MARKET_NAME, Market
+from mexbtcapi.api.bitstamp.rest.high_level import MARKET_NAME, BitstampMarket
 
 name = MARKET_NAME
-market = Market
+market = BitstampMarket

@@ -31,11 +31,19 @@ import mexbtcapi
 from mexbtcapi import concepts
 from mexbtcapi.concepts.currencies import BTC, USD
 from mexbtcapi.concepts.currency import Amount, ExchangeRate
-from mexbtcapi.concepts.market import Market as BaseMarket, PassiveParticipant
+from mexbtcapi.concepts.market import Market as BaseMarket, PassiveParticipant, Order
 
 import urllib
 import urllib2
+import sys
 import json
+
+try:
+    from bitstamp import client
+except ImportError:
+    print "Couldn't find module bitstamp. Download and install from:"
+    print "https://github.com/kmadac/bitstamp-python-client.git"
+    sys.exit(1)
 
 MARKET_NAME= "Bitstamp"
 _URL = "https://www.bitstamp.net/api/"
@@ -43,26 +51,17 @@ _URL = "https://www.bitstamp.net/api/"
 class BitStampTicker( concepts.market.Ticker):
     TIME_PERIOD= 24*60*60
 
-class Market(BaseMarket):
+class BitstampMarket(BaseMarket):
     def __init__( self, currency ):
-        mexbtcapi.concepts.market.Market.__init__(self, MARKET_NAME, BTC, currency)
+        mexbtcapi.concepts.market.Market.__init__(self, MARKET_NAME, currency, BTC)
         if currency != USD:
             raise Exception("Currency not supported on Bitstamp: " + currency)
         self.xchg_factory = partial(ExchangeRate, BTC, USD)
-
-    def json_request(self, url, data=None):
-        if data is not None:
-            data = urllib.urlencode(data)
-            req = urllib2.Request(url, data)
-        else:
-            req = urllib2.Request(url)
-        f = urllib2.urlopen(req)
-        jdata = json.load(f)
-        return jdata
+        self.public_api = client.public()
 
     def getTicker(self):
         url = _URL + "ticker"
-        data = self.json_request(url)
+        data = self.public_api.ticker()
         for x,y in [('bid','buy'),('ask','sell')]:
             data[y]= data[x]
         fields= list(BitStampTicker.RATE_FIELDS)
@@ -71,27 +70,19 @@ class Market(BaseMarket):
         data2['time']= datetime.datetime.now()
         return BitStampTicker( market=self, **data2 ) 
 
-    def getOpenTrades(self):
-        url = _URL + "order_book/"
-        data = self.json_request(url)
-#        print data
-        trades = []
-        # FIXME Figure out how to represent and differenciate bids and asks
-        for type in ('bids', 'asks'):
-            for offer in data[type]:
-                rate = Decimal(offer[0])
-                amount = Decimal(offer[1])
+    def getDepth(self):
+        data = self.public_api.order_book()
+        #print data
+        ret = {}
+        for typ in ('bids', 'asks'):
+            depth = []
+            ret[typ]=depth
+            for o in data[typ]:
+                rate = Decimal(o[0])
+                amount = Decimal(o[1])
                 from_amount = Amount(rate * amount, USD)
-                to_amount = Amount(1 * amount, BTC)
-                from_entity = None
-                to_entity = None
-                if 'bids' == type:
-                    from_entity = PassiveParticipant(self)
-                else:
-                    to_entity = PassiveParticipant(self)
-                trades.append(concepts.market.Trade(from_amount = from_amount,
-                                                    to_amount = to_amount,
-                                                    from_entity = from_entity,
-                                                    to_entity = to_entity,
-                                                    market=self))
-        return trades
+                price = self.xchg_factory(rate)
+                order_type = (typ == 'bids' and Order.BID) or Order.ASK
+                depth.append(Order(self, None, order_type, from_amount, price))
+        return ret
+
