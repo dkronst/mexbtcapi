@@ -52,7 +52,7 @@ class BitStampTicker( concepts.market.Ticker):
     TIME_PERIOD= 24*60*60
 
 class BitstampMarket(BaseMarket):
-    def __init__( self, currency ):
+    def __init__( self, currency, currency2 = BTC):
         mexbtcapi.concepts.market.Market.__init__(self, MARKET_NAME, currency, BTC)
         if currency != USD:
             raise Exception("Currency not supported on Bitstamp: " + currency)
