@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 dollars= "1000"*USD
 bitcoins = "500"*BTC
-for api in mexbtcapi.apis:
+for api in [mexbtcapi.apis[3]]:
     try:
         market = api.market(USD)
         print "Using market:", market.name

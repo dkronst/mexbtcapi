@@ -42,7 +42,7 @@ try:
     import vircurex
 except ImportError:
     print "Couldn't find module vircurex. Please download from:"
-    print "https://github.com/christopherpoole/pyvircurex.git"
+    print "https://github.com/dkronst/pyvircurex.git"
     sys.exit(1)
 
 MARKET_NAME= "VirCurEx"
