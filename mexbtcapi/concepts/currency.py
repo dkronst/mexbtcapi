@@ -42,7 +42,11 @@ class Currency(object):
         raise TypeError("Can't divide a "++str(type(other))+" by a Currency")
         
         
+class FiatCurrency(Currency):
+    pass
 
+class CryptoCurrency(Currency):
+    pass
 
 class ExchangeRate(object):
     """The proportion between two currencies' values"""
