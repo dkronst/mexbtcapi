@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from functools import partial
 import logging
+import time
 
 from mexbtcapi import concepts
 from mexbtcapi.concepts.currencies import BTC
@@ -47,7 +48,8 @@ class MtGoxMarket(BaseMarket):
         self.multiplier = low_level.multiplier
         self.xchg_factory = partial(concepts.currency.ExchangeRate,
                                     BTC, currency)
-        self.mtgox_stream = None
+        self.mtgox_stream = streamapi.MtGoxStream([self.currency1])
+        self.depth_channel = None
 
     def _multiplier(self, currency):
         return self.multiplier[currency.name]
@@ -71,9 +73,12 @@ class MtGoxMarket(BaseMarket):
 
     def getDepth(self):
         logger.debug("getting depth")
-        if not self.mtgox_stream:
-            self.mtgox_stream = streamapi.MtGoxStream([self.currency1])
+        if not self.depth_channel:
+            # Note that there's a race here - if the stream connects AFTER 
+            # the low-level depth was received, some depth messages may be lost.
+            # In any case, the depth cannot be considered 100% accurate
             low_level_depth = low_level.depth(str(self.currency1))
+            low_level_depth['now'] = time.time()
             self.depth_channel = streamapi.DepthChannel(low_level_depth)
             self.mtgox_stream.subscribe(self.depth_channel)
         

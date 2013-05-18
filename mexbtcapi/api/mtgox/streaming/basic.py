@@ -14,6 +14,7 @@ CHANNEL_IDS = {"depth":"24e67e0d-1cad-4cc0-9e7a-f8523ef460fe",
                "ticker":"d5f06780-30a8-4a48-a2f8-7ed181b4a13f",
                "trade":"dbf1dee9-4f2e-4a08-8cb7-748919a71b21"}
 
+
 class MtGoxStream(object):
     """
     Represent a single MtGox stream
@@ -61,6 +62,7 @@ class MtGoxStream(object):
             """
             Main thread loop
             """
+            self.stream.ws.connect('wss://websocket.mtgox.com/mtgox?Currency=%s'%self.stream.curr_str) # TODO: Verify cert
 
             while self.valid:
                 while not self.to_send.empty():
@@ -72,6 +74,22 @@ class MtGoxStream(object):
                 msg = self.stream.ws.recv()
                 self.processMessage(json.loads(msg))
 
+    #_instances = {}
+    #def __new__(cls, *args, **kwargs):
+    #    if args:
+    #        currencies = args[0]
+    #    elif 'currencies' in kwargs:
+    #        currencies = kwargs['currencies']
+    #    currencies = [str(a) for a in currencies]
+#
+    #    khash = ','.join(currencies)
+
+    #    if khash not in cls._instances:
+    #        cls._instances[khash] = super(MtGoxStream, cls).__new__(
+    #                cls, *args, **kwargs)
+
+    #    return cls._instances[khash]
+
     def __init__(self, currencies):
         """
         Initialize a MtGox stream...
@@ -79,8 +97,7 @@ class MtGoxStream(object):
         """
         self.currencies = currencies
         self.ws = websocket.WebSocket()
-        curr_str = ','.join((str(c) for c in currencies))
-        self.ws.connect('wss://websocket.mtgox.com/mtgox?Currency=%s'%curr_str) # TODO: Verify cert
+        self.curr_str = ','.join((str(c) for c in currencies))
         self.sock = self.ws.sock
         self.subscriptions = {}
         self.channels = []
@@ -172,11 +189,15 @@ class DepthChannel(NoSubscriptionChannel):
                 res[typ][price_int] = amount_int
 
         self.depth_info = res
+        self.initial_time = int(initial_depth['now'])
 
     def _add_to_depth(self, msg):
         """
         Adds a message to current depth
         """
+        if int(msg['now']) < self.initial_time:
+            return
+
         dpt = msg["depth"]
         price_int = int(dpt['price_int'])
         volume_int = int(dpt['volume_int'])
