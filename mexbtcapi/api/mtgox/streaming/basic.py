@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import json
-from Queue import Queue
+from multiprocessing import Queue
 
 try:
     import websocket
@@ -8,23 +8,22 @@ except ImportError as e:
     raise ImportError("You need to install the websocket module. \
         Get it from https://github.com/liris/websocket-client.git")
 
-import threading
+import multiprocessing
 
 CHANNEL_IDS = {"depth":"24e67e0d-1cad-4cc0-9e7a-f8523ef460fe",
                "ticker":"d5f06780-30a8-4a48-a2f8-7ed181b4a13f",
                "trade":"dbf1dee9-4f2e-4a08-8cb7-748919a71b21"}
 
-
 class MtGoxStream(object):
     """
     Represent a single MtGox stream
     """
-    class CommThread(threading.Thread):
+    class CommProc(multiprocessing.Process):
         """
         Implements a thread which listens to subscriptions on the given channels
         """
         def __init__(self, stream):
-            threading.Thread.__init__(self)
+            super(MtGoxStream.CommProc, self).__init__()
             self.stream = stream
             self.ws = stream.ws
 
@@ -33,7 +32,7 @@ class MtGoxStream(object):
             self.to_send = Queue()
             self.to_recv = Queue()
             self.valid = True
-            self.setDaemon(True) # Don't hang the process when interrupted
+            self.daemon = True # Don't hang the process when interrupted
 
         def processMessage(self, msg):
             """
@@ -86,13 +85,13 @@ class MtGoxStream(object):
         self.subscriptions = {}
         self.channels = []
         self.remarks = Queue()
-        self.startCommThread()
+        self.startCommProc()
 
-    def startCommThread(self):
+    def startCommProc(self):
         """
         Start the communication thread after connecting
         """
-        self.comm_thread = self.CommThread(self)
+        self.comm_thread = self.CommProc(self)
         self.comm_thread.start()
 
     def subscribe(self, channel):
@@ -135,14 +134,12 @@ class MtGoxChannel(object):
         """
         self.msg_queue = Queue()
         self.ch_type = ch_type
-        self.msg_event = threading.Event()
 
     def push_msg(self, msg):
         """
         Push a message to the message queue
         """
         self.msg_queue.put(msg)
-        self.msg_event.set()
     
 class NoSubscriptionChannel(MtGoxChannel):
     """

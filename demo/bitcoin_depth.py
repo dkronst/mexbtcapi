@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from decimal import Decimal
 
 for api in mexbtcapi.apis:
-    try:
+#    try:
         cmp = lambda x,y: int(float(x.exchange_rate.convert(Amount(1, BTC)).value - 
             y.exchange_rate.convert(Amount(1, BTC)).value)*10E+6)
         dcmp = lambda x,y: -cmp(x,y)
@@ -29,5 +29,5 @@ for api in mexbtcapi.apis:
             else:
                 plt.plot(x, y, 'r')
         plt.show()
-    except Exception, e:
+#    except Exception, e:
         print "Failed to use "+api.name 

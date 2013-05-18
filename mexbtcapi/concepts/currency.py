@@ -48,14 +48,15 @@ class FiatCurrency(Currency):
 class CryptoCurrency(Currency):
     pass
 
+class BadCurrency( Exception ):
+    def __init__(self, exchange_rate, other_currency):
+        self.er, self.oc= exchange_rate, other_currency
+    def __str__(self):
+        s= "A ExchangeRate of {0} cannot handle {1}"
+        return s.format(self.er, self.oc)
+
 class ExchangeRate(object):
     """The proportion between two currencies' values"""
-    class BadCurrency( Exception ):
-        def __init__(self, exchange_rate, other_currency):
-            self.er, self.oc= exchange_rate, other_currency
-        def __str__(self):
-            s= "A ExchangeRate of {0} cannot handle {1}"
-            return s.format(self.er, self.oc)
 
     def __init__(self, c1, c2, exchange_rate):
         '''c2 = exchange_rate * c1'''
@@ -78,7 +79,7 @@ class ExchangeRate(object):
             i= not(i)
         er= self._er if i else 1 /  self._er
         if currency and c!=currency:
-            raise self.BadCurrency(self, currency)
+            raise BadCurrency(self, currency)
         return Amount(amount.value * er, c)
     
     def reverse( self ):
@@ -112,7 +113,7 @@ class ExchangeRate(object):
         elif self._c[1] == currency:
             return False
         else:
-            raise self.BadCurrency(self, currency)
+            raise BadCurrency(self, currency)
             
     def otherCurrency(self, currency):
         return self._c[ 1 if self._isFirst(currency) else 0 ]
@@ -192,7 +193,7 @@ class ExchangeRate(object):
             else:
                 return ExchangeRate(other.c[0], self.c[1], other._er*self._er)
         else:
-            raise BadCurrency("Can only multiply currency that reduce to a simple C1/C2 exchange rate")
+            raise Exception("Can only multiply currency that reduce to a simple C1/C2 exchange rate")
 
 class Amount(object):
     """An amount of a given currency"""
