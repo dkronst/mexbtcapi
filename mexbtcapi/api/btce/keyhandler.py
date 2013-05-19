@@ -12,14 +12,18 @@ class KeyHandler(object):
         '''
         self.keys = {}
         if filename is not None:
-            f = open(filename, "rt")
-            while True:
-                key = f.readline().strip()
-                if not key:
-                    break
-                secret = f.readline().strip()
-                nonce = int(f.readline().strip())
-                self.keys[key] = (secret, nonce)
+            try:
+                f = open(filename, "rt")
+                while True:
+                    key = f.readline().strip()
+                    if not key:
+                        break
+                    secret = f.readline().strip()
+                    nonce = int(f.readline().strip())
+                    self.keys[key] = (secret, nonce)
+            except IOError, e:
+                # file doesn't exist possibly
+                self.save(filename)
             
     def save(self, filename):
         f = open(filename, "wt")

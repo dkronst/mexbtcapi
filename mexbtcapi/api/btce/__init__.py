@@ -5,7 +5,7 @@ from keyhandler import KeyHandler
 
 import mexbtcapi.api.btce
 
-from mexbtcapi.api.btce.high_level import BTCeMarket, BTCeParticipant
+from mexbtcapi.api.btce.high_level import BTCeMarket, BTCeParticipant, BTCeSecretFileContainer
 import logging
 
 logging.getLogger(__name__)
@@ -13,3 +13,4 @@ logging.getLogger(__name__)
 name = BTCeMarket.MARKET_NAME
 market = BTCeMarket
 participant = BTCeParticipant
+secret_container = BTCeSecretFileContainer

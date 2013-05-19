@@ -88,6 +88,12 @@ class Order(object):
         return "<Order({0}, {1}, {2}, {3}>".format(self.market, self.timestamp,
                     self.from_amount, self.exchange_rate)
 
+class SecretContainer(object):
+    """
+    Contains secret information relevant to a specific exchange
+    """
+    def __init__(self):
+        pass
 
 class Market(object):
     """Represents a market - where Trades are made
