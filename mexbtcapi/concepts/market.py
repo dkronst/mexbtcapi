@@ -124,6 +124,8 @@ class Market(object):
         order only!) and the item is how much of the item will be gained if this
         order was placed right now (actual results may vary due to engine lag)
 
+        Some exchanges such as MtGox have this feature as an API call.
+
         returns a tupple of amounts with currency and the item respectively
         """
         def upperLimit(d, order):
@@ -184,7 +186,6 @@ class Market(object):
         return total_transacted, order.from_amount - bucket
 
 
-
     def getTrades(self):
         """Returns all completed trades"""
         raise NotImplementedError()
@@ -208,7 +209,8 @@ class Market(object):
 
 
 class Participant(object):
-    """Represents a participant in a market
+    """
+    Represents a participant in a market
     """
 
     def __init__(self, market):
@@ -217,14 +219,15 @@ class Participant(object):
 
 
 class PassiveParticipant(Participant):
-    """A participant over which the user has no control
     """
-
+    A participant over which the user has no control
+    """
     pass
 
 
 class ActiveParticipant(Participant):
-    """A participant under user control (may be the user itself)
+    """
+    A participant under user control (may be the user itself)
     """
     class ActiveParitipantError(Exception):
         """Base ActiveParticipant error"""

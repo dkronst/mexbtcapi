@@ -56,8 +56,10 @@ class TradeHistoryItem(object):
 
         
 class OrderItem(object):
-    '''A list of instances of this class will be returned by 
-    a successful call to TradeAPI.orderList.'''
+    '''
+    A list of instances of this class will be returned by 
+    a successful call to TradeAPI.orderList.
+    '''
     
     def __init__(self, order_id, info):
         self.order_id = order_id
@@ -67,8 +69,10 @@ class OrderItem(object):
 
         
 class TradeResult(object):
-    '''An instance of this class will be returned by 
-    a successful call to TradeAPI.trade.'''
+    '''
+    An instance of this class will be returned by 
+    a successful call to TradeAPI.trade.
+    '''
     
     def __init__(self, info):
         self.received = info.get(u"received")
@@ -80,8 +84,10 @@ class TradeResult(object):
             
    
 class CancelOrderResult(object):
-    '''An instance of this class will be returned by 
-    a successful call to TradeAPI.cancelOrder.'''
+    '''
+    An instance of this class will be returned by 
+    a successful call to TradeAPI.cancelOrder.
+    '''
     
     def __init__(self, info):
         self.order_id = info.get(u"order_id")

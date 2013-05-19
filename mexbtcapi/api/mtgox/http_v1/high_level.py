@@ -26,7 +26,6 @@ class MtGoxTicker(concepts.market.Ticker):
 
 
 class MtGoxOrder(Order):
-
     def __init__(self, oid, *args, **kwargs):
         super(MtGoxOrder, self).__init__(*args, **kwargs)
         self.oid = oid
@@ -178,7 +177,7 @@ class MtGoxParticipant(ActiveParticipant):
             order_type = Order.BID if o['type'] else Order.ASK
             amount = Amount(Decimal(o['amount']['value_int']) / self.market._multiplier(BTC), BTC)
             price = self.market.xchg_factory( Decimal(o['price']['value_int']) / self.market._multiplier(currency))
-            order = MtGoxOrder( oid, self.market, timestamp, order_type, amount, price, entity=self)
+            order = MtGoxOrder(oid, self.market, timestamp, order_type, amount, price, entity=self)
 
             # add additional status from MtGox
             order.status = o['status']

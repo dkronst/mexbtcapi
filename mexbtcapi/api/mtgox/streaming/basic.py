@@ -62,7 +62,10 @@ class MtGoxStream(object):
             """
             Main thread loop
             """
-            self.stream.ws.connect('wss://websocket.mtgox.com/mtgox?Currency=%s'%self.stream.curr_str) # TODO: Verify cert
+            try:
+                self.stream.ws.connect('wss://websocket.mtgox.com/mtgox?Currency=%s'%self.stream.curr_str) # TODO: Verify cert
+            except Exception, e:
+                self.valid = False
 
             while self.valid:
                 while not self.to_send.empty():
