@@ -33,7 +33,7 @@ class MtGoxOrder(Order):
     def __repr__(self):
         return \
             "<MtGoxOrder({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}>" \
-            .format(self.market, self.timestamp, self.oid, self.buy_or_sell,
+            .format(self.market, self.timestamp, self.oid, self.order_type,
             self.from_amount, self.exchange_rate, self.properties, self.entity)
 
 
@@ -138,13 +138,34 @@ class MtGoxParticipant(ActiveParticipant):
     def placeOrder(self, order):
         """places an Order in the market for limit/amount"""
         now = datetime.now()
-        if order.is_bid_order():
+        market = self.market
+        limit = order.exchange_rate
+
+        if order.order_type in [Order.MARKET_SELL, Order.MARKET_BUY]:
+            limit = None
+            
+        if not limit:
+            price = 0.1 if order.is_sell_market_order() else 399.99
+            assert order.order_type in [Order.MARKET_SELL, Order.MARKET_BUY]
+            
+            limit = ExchangeRate(self.market.currency2, self.market.currency1, price)
+            
+        if order.from_amount.currency == market.currency1:
+            amount = limit.convert(order.from_amount)
+        elif order.from_amount.currency == market.currency2:
+            amount = order.from_amount
+        else:
+            assert False
+
+        flimit = limit.convert(Amount(1, market.currency2)).value
+
+        if order.order_type in [Order.MARKET_BUY, Order.BID]:
             logger.debug("placing bid order")
-            oid = self.private.bid(order.from_amount.value, order.exchange_rate)
+            oid = self.private.bid(order.from_amount.value, flimit)
             return MtGoxOrder(oid, self.market, now, Order.BID, amount, limit, entity=self)
         else:
             logger.debug("placing ask order")
-            oid = self.private.ask(amount, limit)
+            oid = self.private.ask(order.from_amount.value, flimit)
             return MtGoxOrder(oid, self.market, now, Order.ASK, amount, limit, entity=self)
 
     def cancelOrder(self, order):

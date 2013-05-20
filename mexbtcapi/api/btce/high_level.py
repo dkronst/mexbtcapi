@@ -155,24 +155,26 @@ class BTCeParticipant(ActiveParticipant):
         logger.debug("placing %s order"%typ)
 
         limit = order.exchange_rate
+
+        if order.order_type in [Order.MARKET_SELL, Order.MARKET_BUY]:
+            limit = None
+            
         if not limit:
             price = 0.1 if order.is_sell_market_order() else 399.99
             assert order.order_type in [Order.MARKET_SELL, Order.MARKET_BUY]
-
+            
             limit = ExchangeRate(self.market.currency2, self.market.currency1, price)
-        
+            
         if order.from_amount.currency == market.currency1:
             amount = limit.convert(order.from_amount)
         elif order.from_amount.currency == market.currency2:
             amount = order.from_amount
         else:
             assert False
-        print amount
-        raw_input()
 
         info = self.private.trade(market.currency_pair, typ, limit.convert(Amount(1, market.currency2)).value, amount.value)
         
-        return self._makeReturnOrder(info, typ, limit)
+        return self._makeReturnOrder(info, order.order_type, limit)
 
     def cancelOrder(self, order):
         """Cancel an existing order"""
