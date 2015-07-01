@@ -23,3 +23,4 @@ for api in mexbtcapi.apis:
 
     except Exception, e:
         print "Failed to use "+api.name 
+        raise
