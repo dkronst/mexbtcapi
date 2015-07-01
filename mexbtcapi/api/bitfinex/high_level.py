@@ -63,8 +63,10 @@ class BitfinexMarket(BaseMarket):
 
     def getDepth(self):
         logger.debug("getting depth")
+
+        parameters = {'limit_asks': self.depth, 'limit_bids': self.depth}
         
-        d = self.client.order_book(self._getCurrencyPair())
+        d = self.client.order_book(self._getCurrencyPair(), parameters)
 
         ret = {
             'asks': self._depthToOrders(d[u'asks'], Order.ASK),
