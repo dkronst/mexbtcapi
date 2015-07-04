@@ -44,6 +44,7 @@ class BitfinexMarket(BaseMarket):
         try:
             from bitfinex.client import Client
         except ImportError:
+            import sys
             print "Couldn't find module bitfinex. Download and install from:"
             print "https://github.com/scottjbarr/bitfinex"
             print "Or run:\n pip install bitfinex"

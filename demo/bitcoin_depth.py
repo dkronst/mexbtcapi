@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from decimal import Decimal
 
 for api in mexbtcapi.apis:
-#    try:
+    try:
         from mexbtcapi.util.comp import comp, dcomp
         depth = api.market(USD).getDepth()
         for typ in ['asks', 'bids']:
@@ -28,6 +28,6 @@ for api in mexbtcapi.apis:
             else:
                 plt.plot(x, y, 'r')
         plt.show()
-#    except Exception, e:
+    except Exception, e:
         print "Failed to use "+api.name
         raise
