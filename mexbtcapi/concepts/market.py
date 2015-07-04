@@ -2,6 +2,8 @@ from currency import ExchangeRate, Amount
 from datetime import datetime, timedelta
 from decimal import Decimal
 
+from mexbtcapi.util.comp import comp, dcomp
+
 
 class Trade(object):
     """Represents an exchange of two currency amounts.
@@ -143,9 +145,6 @@ class Market(object):
 
         # this is a fairly generic implementation. It should work for
         # all markets that implement "getDepth" properly
-        cmp = lambda x,y: int(float(x.exchange_rate.convert(Amount(1, self.currency2)).value - 
-            y.exchange_rate.convert(Amount(1, self.currency2)).value)*10E+8)
-        dcmp = lambda x,y: -cmp(x,y)
 
         depth = self.getDepth()
         # There are 4 possibilities for bid/ask orders:
@@ -174,8 +173,8 @@ class Market(object):
         bucket = order.from_amount.clone() # starting with a full amount of currency and subtracting as we go...
 
         # If we are buying we need to look at the sorted asks, and vice versa
-        dp = (order.order_type in [Order.BID, Order.MARKET_BUY] and sorted(depth['asks'], cmp)) \
-                or sorted(depth['bids'], dcmp)
+        dp = (order.order_type in [Order.BID, Order.MARKET_BUY] and sorted(depth['asks'], comp(self.currency2)) \
+                or sorted(depth['bids'], dcomp(self.currency2)))
         total_transacted = Amount(0, sim_c)
 
         for d in dp:

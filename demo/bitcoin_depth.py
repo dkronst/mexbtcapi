@@ -2,19 +2,18 @@ import mexbtcapi
 from mexbtcapi.concepts.currencies import USD,BTC
 from mexbtcapi.concepts.currency import Amount
 
+
 import matplotlib.pyplot as plt
 
 from decimal import Decimal
 
 for api in mexbtcapi.apis:
 #    try:
-        cmp = lambda x,y: int(float(x.exchange_rate.convert(Amount(1, BTC)).value - 
-            y.exchange_rate.convert(Amount(1, BTC)).value)*10E+6)
-        dcmp = lambda x,y: -cmp(x,y)
-
+        from mexbtcapi.util.comp import comp, dcomp
         depth = api.market(USD).getDepth()
         for typ in ['asks', 'bids']:
-            keys = sorted(depth[typ], typ=='asks' and cmp or dcmp)
+            keys = sorted(depth[typ], comp(BTC) if typ=='asks' else dcomp(BTC))
+            keys = [k for k in keys if k.exchange_rate.convert(Amount(Decimal(1.0), BTC)).value < 500] # This is arbitrary. Best is to use max/min values.
             v = 0.0
             y = []
 
@@ -30,4 +29,5 @@ for api in mexbtcapi.apis:
                 plt.plot(x, y, 'r')
         plt.show()
 #    except Exception, e:
-        print "Failed to use "+api.name 
+        print "Failed to use "+api.name
+        raise

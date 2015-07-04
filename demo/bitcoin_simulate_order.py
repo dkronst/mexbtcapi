@@ -13,8 +13,8 @@ for api in [mexbtcapi.apis[3]]:
     try:
         market = api.market(USD)
         print "Using market:", market.name
-        print "bid BTC: ", market.simulateOrder(Order(market, None, Order.BID, bitcoins, ExchangeRate(BTC, USD, 150)))
-        print "bid USD: ", market.simulateOrder(Order(market, None, Order.BID, dollars, ExchangeRate(BTC, USD, 150)))
+        print "bid BTC: ", market.simulateOrder(Order(market, None, Order.BID, bitcoins, ExchangeRate(BTC, USD, 257)))
+        print "bid USD: ", market.simulateOrder(Order(market, None, Order.BID, dollars, ExchangeRate(BTC, USD, 254)))
         print "ask USD: ", market.simulateOrder(Order(market, None, Order.ASK, dollars, ExchangeRate(BTC, USD, 100)))
         print "ask BTC: ", market.simulateOrder(Order(market, None, Order.ASK, bitcoins, ExchangeRate(BTC, USD, 100)))
         print "buy market USD: ", market.simulateOrder(Order(market, None, Order.MARKET_BUY, dollars, None))
@@ -23,3 +23,4 @@ for api in [mexbtcapi.apis[3]]:
 
     except Exception, e:
         print "Failed to use "+api.name 
+        raise
